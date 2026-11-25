@@ -46,7 +46,7 @@ export default function BoardPage() {
         );
         if (isInvalid) return;
 
-        let responses = []
+        let responseData = []
         for (let user of registeredFor) {
             let res = await fetch(`/api/v2/users/${user.id}/vouchers`, {
                 method: "POST",
@@ -57,26 +57,26 @@ export default function BoardPage() {
                     amount: amount
                 }),
             });
-            responses.push(res)
+            responseData.push({ name: user.name, response: res })
         }
 
         let failedUsers = []
 
-        for (let res of responses) {
+        for (let data of responseData) {
+            let res = data.response
             if (res.ok) continue
-            const data = await res.json()
-            if (res.status == 403 || res.status == 400) {
-                setResponse(data.error)
+            const json = await res.json()
+            if (res.status >= 400 && res.status < 500) {
+                setResponse(json.errorMsg)
                 setSnackbarOpen(true)
                 setSeverity("error")
                 return
             }
-            failedUsers.push(data)
+            failedUsers.push(data.name)
         }
 
         if (failedUsers.length != 0) {
-            let names = failedUsers.map((id) => users.find(u => u.id = id).name)
-            setResponse("Registering failed for " + names.toString() + " user(s)")
+            setResponse("Registering failed for " + failedUsers.toString())
             setSnackbarOpen(true)
             setSeverity("error")
             return
@@ -85,7 +85,7 @@ export default function BoardPage() {
         setRegisteredFor([]);
         setAmount(0);
 
-        let names = registeredFor.map((id) => users.find(u => u.id = id).name)
+        let names = registeredFor.map((user) => users.find(u => u.id == user.id).name)
         setResponse("Vouchers registered for " + names.toString())
         setSeverity("success")
         setSnackbarOpen(true)
