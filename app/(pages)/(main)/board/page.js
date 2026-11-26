@@ -61,10 +61,14 @@ export default function BoardPage() {
         }
 
         let failedUsers = []
+        let successUsers = []
 
         for (let data of responseData) {
             let res = data.response
-            if (res.ok) continue
+            if (res.ok) {
+                successUsers.push(data.name)
+                continue
+            }
             const json = await res.json()
             if (res.status >= 400 && res.status < 500) {
                 setResponse(json.errorMsg)
@@ -75,10 +79,20 @@ export default function BoardPage() {
             failedUsers.push(data.name)
         }
 
-        if (failedUsers.length != 0) {
-            setResponse("Registering failed for " + failedUsers.toString())
+        console.log(failedUsers)
+        console.log(successUsers)
+
+        if (failedUsers.length == registeredFor.length) {
+            setResponse("Registration failed for " + failedUsers.toString())
             setSnackbarOpen(true)
             setSeverity("error")
+            return
+        }
+
+        if (failedUsers.length != 0 && successUsers != 0) {
+            setResponse("Registration failed for " + failedUsers.toString() + ", but worked for " + successUsers.toString())
+            setSnackbarOpen(true)
+            setSeverity("warning")
             return
         }
 
